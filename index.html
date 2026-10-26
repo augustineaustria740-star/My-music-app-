@@ -3,256 +3,218 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AustrioPhy - Free Music + Lyrics | No Subscription</title>
-<meta name="description" content="AustrioPhy - Free forever music app with lyrics, Firebase worldwide sync, installable as app.">
+<title>AustrioPhy - Free Music Forever</title>
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1DB954">
-<!-- APP ICON - V4 -->
-<link rel="icon" type="image/png" href="icon.png">
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="manifest" href='data:application/json;base64,eyJuYW1lIjoiQXVzdHJpb1BoeSAtIEZyZWUgTXVzaWMiLCJzaG9ydF9uYW1lIjoiQXVzdHJpb1BoeSIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMTIxMjEyIiwidGhlbWVfY29sb3IiOiIjMURCOTU0IiwiaWNvbnMiOlt7InNyYyI6Imljb24ucG5nIiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3BuZyJ9XX0='>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-const firebaseConfig = {
-  apiKey: "AIzaSyDEMO-REPLACE-WITH-YOURS",
-  authDomain: "austriophy.firebaseapp.com",
-  projectId: "austriophy-demo",
-  storageBucket: "austriophy-demo.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123:web:demo"
-};
-try{ const app = initializeApp(firebaseConfig); window.db = getFirestore(app); window.storage = getStorage(app); window.fbTools = {collection, addDoc, getDocs, ref, uploadBytes, getDownloadURL}; }catch(e){}
-</script>
+<link rel="icon" href="icon.png">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui}
-body{background:#121212;color:#fff;padding-bottom:95px}
-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#000;position:sticky;top:0;z-index:20;gap:8px;flex-wrap:wrap}
-.logo{display:flex;align-items:center;gap:6px;color:#1DB954;font-weight:900;font-size:19px}
-.logo img{width:28px;height:28px;border-radius:6px}
-.search-wrap{flex:1;min-width:180px;max-width:500px;position:relative}
-.search-wrap input{width:100%;padding:11px 14px 11px 38px;border-radius:999px;border:none;background:#242424;color:#fff;font-size:13px;outline:none}
-.ic{position:absolute;left:12px;top:10px}
-.top-actions{display:flex;gap:6px;align-items:center}
-.btn{padding:9px 14px;border-radius:999px;border:none;font-weight:800;cursor:pointer;font-size:12px}
-.btn-g{background:#1DB954;color:#000}.btn-b{background:#fff;color:#000}.btn-o{background:#242424;color:#fff;border:1px solid #333}
-.btn-install{background:#fff;color:#000;border:1px solid #1DB954;animation:pulse 2s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(29,185,84,.7)}70%{box-shadow:0 0 0 10px rgba(29,185,84,0)}100%{box-shadow:0 0 0 0 rgba(29,185,84,0)}}
-.tabs{display:flex;gap:16px;padding:10px 16px;border-bottom:1px solid #222;overflow:auto}
-.tab{white-space:nowrap;opacity:.6;cursor:pointer;padding-bottom:5px;border-bottom:2px solid transparent;font-size:13px;font-weight:700}
-.tab.active{opacity:1;color:#1DB954;border-color:#1DB954}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;padding:12px}
-.card{background:#181818;padding:9px;border-radius:12px;cursor:pointer;border:1px solid #222;position:relative}
-.card img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;margin-bottom:6px}
-.card h4{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card p{font-size:11px;color:#aaa}
-.badge{font-size:9px;background:#1DB954;color:#000;padding:2px 6px;border-radius:99px;font-weight:800;display:inline-block;margin-top:3px}
-.card .lyrics-btn{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.75);color:#fff;border:none;padding:4px 7px;border-radius:99px;font-size:10px;cursor:pointer;z-index:2}
-.player{position:fixed;bottom:0;left:0;right:0;background:#181818;border-top:1px solid #2a2a2a;display:flex;align-items:center;gap:8px;padding:8px 10px;z-index:30}
-.player img{width:48px;height:48px;border-radius:5px;object-fit:cover}
-.p-info{flex:1;min-width:0}.p-info h5{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.p-info p{font-size:10px;color:#aaa}
-audio{flex:1;max-width:200px;height:32px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
-.modal.show{display:flex}.box{background:#181818;border:1px solid #333;padding:18px;border-radius:16px;width:100%;max-width:380px;max-height:85vh;overflow:auto}
-.box input,.box select{width:100%;padding:11px;border-radius:8px;border:none;background:#242424;color:#fff;margin:5px 0}
-.section-title{padding:16px 12px 4px;font-size:16px;font-weight:800}
-.ai-bar{margin:12px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:10px;display:flex;gap:8px;align-items:center}
-.ai-bar input{flex:1;background:#242424;border:none;color:#fff;padding:10px;border-radius:999px;font-size:12px}
-#lyricsModal .box{max-width:500px;background:#121212;border:1px solid #1DB954}
-#lyricsText{white-space:pre-wrap;line-height:1.7;font-size:13px;color:#e5e5e5;margin-top:10px;max-height:50vh;overflow:auto;background:#000;padding:12px;border-radius:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:Inter,system-ui,sans-serif;padding-bottom:160px}
+.header{position:sticky;top:0;z-index:10;background:#000;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222}
+.logo{display:flex;align-items:center;gap:8px;font-weight:900;font-size:22px}
+.logo img{width:32px;height:32px;border-radius:8px}
+.btn{background:#1DB954;color:#000;border:none;padding:8px 14px;border-radius:20px;font-weight:700;cursor:pointer}
+.search-box{margin:12px 16px;background:#181818;border-radius:28px;display:flex;align-items:center;padding:10px 16px}
+.search-box input{flex:1;background:transparent;border:none;color:#fff;outline:none;font-size:16px}
+.tabs{display:flex;gap:8px;padding:0 16px;overflow:auto}
+.tab{padding:8px 16px;border-radius:20px;background:#222;color:#aaa;white-space:nowrap;cursor:pointer}
+.tab.active{background:#fff;color:#000;font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px}
+.card{background:#181818;border-radius:12px;padding:10px;cursor:pointer}
+.card img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#222}
+.card h4{margin-top:8px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card p{font-size:12px;color:#aaa}
+.card .actions{display:flex;gap:6px;margin-top:6px}
+.small-btn{background:#222;border:none;color:#fff;padding:4px 8px;border-radius:12px;font-size:11px;cursor:pointer}
+.player{position:fixed;left:0;right:0;bottom:80px;background:#181818;border-top:1px solid #333;padding:10px 16px;display:flex;align-items:center;gap:12px;z-index:20}
+.player img{width:56px;height:56px;border-radius:8px}
+.player-info{flex:1;overflow:hidden}
+.player-info h4{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.progress{height:4px;background:#333;border-radius:2px;margin-top:6px;overflow:hidden}
+.progress div{height:100%;background:#1DB954;width:0%}
+.player-controls{display:flex;gap:8px}
+.player-controls button{background:#fff;color:#000;border:none;width:36px;height:36px;border-radius:50%;font-weight:900;cursor:pointer}
+.nav{position:fixed;left:0;right:0;bottom:0;height:80px;background:#000;border-top:1px solid #222;display:flex;justify-content:space-around;align-items:center;z-index:30}
+.nav-item{display:flex;flex-direction:column;align-items:center;font-size:10px;color:#aaa;cursor:pointer;gap:4px}
+.nav-item.active{color:#fff}
+.nav-item span{font-size:20px}
+.upload-area{margin:16px;background:#181818;padding:16px;border-radius:12px;display:none}
+.upload-area input,.upload-area textarea{width:100%;margin-top:8px;padding:10px;border-radius:8px;border:none;background:#222;color:#fff}
+.lyrics-box{max-height:300px;overflow:auto;background:#000;padding:12px;border-radius:8px;white-space:pre-wrap;margin-top:10px;font-size:14px;line-height:1.6}
 </style>
 </head>
 <body>
-<header>
-<div class="logo"><img src="icon.png" onerror="this.src='https://via.placeholder.com/28?text=A'">AustrioPhy</div>
-<div class="search-wrap"><span class="ic">🔍</span><input id="searchInput" placeholder="Search ANY artist + lyrics"></div>
-<div class="top-actions">
-<button id="installBtn" class="btn btn-install" style="display:none" onclick="installApp()">📲 Download App</button>
-<div id="auth"></div>
+
+<div class="header">
+<div class="logo"><img src="icon.png" onerror="this.src='https://via.placeholder.com/32/1DB954/000?text=A'"> AustrioPhy</div>
+<button class="btn" id="installBtn" style="display:none">📲 Download App</button>
 </div>
-</header>
-<div class="ai-bar">
-<span style="font-size:11px;background:#1DB954;color:#000;padding:3px 8px;border-radius:99px;font-weight:800;">AI+Lyrics+Icon</span>
-<input id="aiInput" placeholder="Ask: 'Lyrics for Calm Down'"><button class="btn btn-g" onclick="askAI()">Ask</button>
+
+<div class="search-box">
+<input id="searchInput" placeholder="Search any song, Rema, Burna...">
+<span onclick="doSearch()" style="cursor:pointer">🔍</span>
 </div>
-<div style="background: linear-gradient(135deg, #1DB954 0%, #000 75%); padding:24px 14px;">
-<span style="background:#fff;color:#000;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:900;">ICON • LYRICS • PWA • FIREBASE • SUPABASE • GOOGLE</span>
-<h1 style="font-size:24px;margin:12px 0;font-weight:900">Tired of Spotify asking for card?</h1>
-<p style="font-size:13px;color:#e5e5e5">Now with app icon + lyrics. Install as real app with your green icon.</p>
-<div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">
-<button onclick="document.getElementById('searchInput').focus()" class="btn btn-b">🔍 Search + Lyrics</button>
-<button onclick="openM('signupM')" class="btn btn-o">I'm Artist</button>
-</div>
-</div>
+
 <div class="tabs">
-<div class="tab active" onclick="tabClick(this,'home')">Home</div>
-<div class="tab" onclick="tabClick(this,'artists')">Artist Uploads LIVE</div>
-<div class="tab" onclick="tabClick(this,'search')">Worldwide + Lyrics</div>
+<div class="tab active" onclick="switchTab('home',this)">Home</div>
+<div class="tab" onclick="switchTab('live',this)">Live Worldwide</div>
+<div class="tab" onclick="switchTab('mymusic',this)">My Uploads</div>
+<div class="tab" onclick="showUpload()">+ Upload</div>
 </div>
-<div class="section-title" id="oldTitle">Your Original 3 Songs + Lyrics</div>
-<div id="oldGrid" class="grid"></div>
-<div class="section-title" id="newTitle">Trending - Tap 🎤 for Lyrics</div>
-<div id="newGrid" class="grid"></div>
-<div class="player">
-<img id="pArt" src="icon.png" onerror="this.src='https://via.placeholder.com/100?text=♪'">
-<div class="p-info"><h5 id="pTitle">No song playing</h5><p id="pArtist">Search to see lyrics</p></div>
-<audio id="audio" controls></audio>
-<button class="btn btn-b" style="padding:6px 10px;font-size:10px" onclick="openLyricsFromPlayer()">🎤 Lyrics</button>
-<button class="btn btn-g" style="padding:6px 8px" onclick="downloadNow()">⬇️</button>
+
+<div id="homeGrid" class="grid"></div>
+<div id="liveGrid" class="grid" style="display:none"></div>
+
+<div id="uploadArea" class="upload-area">
+<h3>Upload Your Song</h3>
+<input id="songTitle" placeholder="Song Title">
+<input id="artistName" placeholder="Artist Name">
+<input type="file" id="audioFile" accept="audio/*">
+<input type="file" id="coverFile" accept="image/*">
+<textarea id="lyricsInput" placeholder="Paste Lyrics here..."></textarea>
+<button class="btn" onclick="uploadSong()" style="width:100%;margin-top:10px">Upload & Publish Worldwide</button>
 </div>
-<div id="lyricsModal" class="modal"><div class="box">
-<div style="display:flex;justify-content:space-between;align-items:center">
-<h3 id="lyricsTitle" style="font-size:16px">🎤 Lyrics</h3>
-<button class="btn btn-o" style="padding:4px 10px" onclick="closeM()">X</button>
+
+<div id="player" class="player" style="display:none">
+<img id="pCover" src="">
+<div class="player-info">
+<h4 id="pTitle">Title</h4>
+<p id="pArtist" style="font-size:12px;color:#aaa">Artist</p>
+<div class="progress"><div id="pBar"></div></div>
 </div>
-<p id="lyricsArtist" style="font-size:12px;color:#aaa;margin:4px 0"></p>
-<div id="lyricsText">Loading lyrics...</div>
-<div style="display:flex;gap:8px;margin-top:12px">
-<button class="btn btn-g" style="flex:1" onclick="shareLyrics()">Share</button>
-<button class="btn btn-b" style="flex:1" onclick="closeM()">Close</button>
+<div class="player-controls">
+<button onclick="toggleLyrics()">🎤</button>
+<button onclick="togglePlay()">⏯️</button>
 </div>
-</div></div>
-<div id="loginM" class="modal"><div class="box">
-<h3>Login Free</h3>
-<input id="lEmail" placeholder="Email"><input id="lPass" type="password" placeholder="Password">
-<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-g" style="flex:1" onclick="doLogin()">Login</button><button class="btn btn-o" onclick="closeM()">Close</button></div>
-</div></div>
-<div id="signupM" class="modal"><div class="box">
-<h3>Create Account - Free + Lyrics + Icon</h3>
-<select id="accType"><option value="user">Normal User - Stream, Lyrics, Download</option><option value="artist">Artist Account - Upload + Lyrics worldwide</option></select>
-<input id="sName" placeholder="Full Name / Artist Name"><input id="sEmail" placeholder="Email"><input id="sPass" type="password" placeholder="Password">
-<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-g" style="flex:1" onclick="doSignup()">Create + Install App</button><button class="btn btn-o" onclick="closeM()">Close</button></div>
-</div></div>
+</div>
+
+<div id="lyricsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:50;padding:20px;overflow:auto">
+<div style="display:flex;justify-content:space-between"><h3 id="lyricTitle">Lyrics</h3><button onclick="toggleLyrics()" class="btn">Close</button></div>
+<div id="lyricContent" class="lyrics-box"></div>
+<div id="ytPlayer" style="margin-top:12px;display:none"><iframe id="ytFrame" width="100%" height="200" frameborder="0" allow="autoplay"></iframe></div>
+</div>
+
+<div class="nav">
+<div class="nav-item active" onclick="switchTab('home',document.querySelector('.tabs .tab'))"><span>🏠</span>Home</div>
+<div class="nav-item" onclick="switchTab('live',document.querySelectorAll('.tabs .tab')[1])"><span>🌍</span>Live</div>
+<div class="nav-item" onclick="doSearch()"><span>🔍</span>Search</div>
+<div class="nav-item" onclick="showUpload()"><span>⬆️</span>Upload</div>
+<div class="nav-item" onclick="switchTab('mymusic',document.querySelectorAll('.tabs .tab')[2])"><span>🎵</span>My Music</div>
+</div>
+
+<audio id="audio"></audio>
+
 <script>
-const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
-let supabaseClient=null; try{ supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }catch(e){}
-const oldSongs = [
- {title:"Austrio Vibe", artist:"AustrioPhy", cover:"icon.png", url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
- {title:"Midnight Drive", artist:"AustrioPhy", cover:"icon.png", url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"},
- {title:"Lagos Nights", artist:"AustrioPhy", cover:"icon.png", url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"},
+let songs = JSON.parse(localStorage.getItem('austrio_songs')||'[]');
+let currentSong=null;
+let isPlaying=false;
+let audio=document.getElementById('audio');
+
+const defaultSongs=[
+{title:"Calm Down",artist:"Rema",cover:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=200",lyrics:"Calm down, calm down...",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
+{title:"Last Last",artist:"Burna Boy",cover:"https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=200",lyrics:"Last last, na everybody go chop breakfast...",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"}
 ];
-let user = JSON.parse(localStorage.getItem('austrio_user')||'null');
-let artistUploads = JSON.parse(localStorage.getItem('austrio_artist_v2')||'[]');
-let currentTrack=null;
-let deferredPrompt=null;
-let currentLyrics={title:"",artist:"",text:""};
-window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; document.getElementById('installBtn').style.display='block'; });
-function installApp(){ if(deferredPrompt){ deferredPrompt.prompt(); } else { alert("To install: Chrome > 3 dots > Add to Home Screen. Icon = green A!"); } }
-function init(){
- document.getElementById('oldGrid').innerHTML = oldSongs.map(s=>cardHTML(s,true)).join('');
- searchMusic('Rema');
- updateAuth(); loadFirebaseSongs();
+
+function renderHome(){
+let all=[...defaultSongs,...songs];
+document.getElementById('homeGrid').innerHTML=all.map((s,i)=>`
+<div class="card" onclick="playSong(${i},'home')">
+<img src="${s.cover}" onerror="this.src='icon.png'"><h4>${s.title}</h4><p>${s.artist}</p>
+<div class="actions"><button class="small-btn" onclick="event.stopPropagation();showLyrics('${s.title}','${(s.lyrics||'').replace(/'/g,'')}')">🎤 Lyrics</button></div>
+</div>`).join('');
 }
-function cardHTML(s,isOld){
- return `<div class="card">
- <button class="lyrics-btn" onclick='event.stopPropagation(); showLyrics("${(s.artist||'').replace(/"/g,'')}", "${(s.title||'').replace(/"/g,'')}")'>🎤</button>
- <div onclick='playTrack(${JSON.stringify(s).replace(/'/g,"&#39;")})'><img src="${s.cover}" onerror="this.src='icon.png'"><h4>${s.title}</h4><p>${s.artist}</p><span class="badge">${isOld?'ORIGINAL':'LYRICS'}</span></div>
- </div>`;
+renderHome();
+
+function switchTab(t,el){
+document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+if(el) el.classList.add('active');
+document.getElementById('homeGrid').style.display=t==='home'?'grid':'none';
+document.getElementById('liveGrid').style.display=t==='live'?'grid':'none';
+document.getElementById('uploadArea').style.display='none';
+if(t==='live' && document.getElementById('liveGrid').innerHTML==='') doSearch('Rema');
+if(t==='mymusic'){
+document.getElementById('homeGrid').style.display='grid';
+document.getElementById('homeGrid').innerHTML=songs.length?songs.map((s,i)=>`
+<div class="card" onclick="playSong(${i+defaultSongs.length},'home')"><img src="${s.cover}"><h4>${s.title}</h4><p>${s.artist}</p></div>`).join(''):'<p style="padding:20px">No uploads yet</p>';
 }
-async function searchMusic(q){
- document.getElementById('newTitle').innerText = `Results for "${q}" - Tap 🎤`;
- document.getElementById('newGrid').innerHTML='<p style="padding:10px;color:#777">Searching...</p>';
- try{
-  const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=24`);
-  const data = await res.json();
-  document.getElementById('newGrid').innerHTML = data.results.map(t=>{
-   const s={title:t.trackName,artist:t.artistName,cover:t.artworkUrl100.replace('100x100','500x500'),preview:t.previewUrl};
-   return `<div class="card">
-   <button class="lyrics-btn" onclick='event.stopPropagation(); showLyrics("${s.artist.replace(/"/g,'')}", "${s.title.replace(/"/g,'')}")'>🎤</button>
-   <div onclick='playWorld(${JSON.stringify(s).replace(/'/g,"&#39;")})'><img src="${s.cover}"><h4>${s.title}</h4><p>${s.artist}</p><span class="badge">🎤 LYRICS</span></div></div>`;
-  }).join('');
-  loadFirebaseSongs(true);
- }catch(e){ document.getElementById('newGrid').innerHTML='<p>Offline</p>'; }
 }
-async function loadFirebaseSongs(append=false){
- try{
-  if(window.db){
-   const snap = await window.fbTools.getDocs(window.fbTools.collection(window.db,"songs"));
-   const fbSongs = []; snap.forEach(d=>fbSongs.push(d.data()));
-   if(fbSongs.length){
-    const html = fbSongs.map(s=>cardHTML(s,false)).join('');
-    if(append) document.getElementById('newGrid').innerHTML += html; else document.getElementById('newGrid').innerHTML = html;
-   }
-  }
- }catch(e){ if(!append) document.getElementById('newGrid').innerHTML = artistUploads.map(s=>cardHTML(s,false)).join(''); }
+
+function showUpload(){document.getElementById('uploadArea').style.display='block';window.scrollTo(0,0)}
+
+function uploadSong(){
+let title=document.getElementById('songTitle').value;
+let artist=document.getElementById('artistName').value;
+let lyrics=document.getElementById('lyricsInput').value;
+let audioFile=document.getElementById('audioFile').files[0];
+let coverFile=document.getElementById('coverFile').files[0];
+if(!title||!artist||!audioFile) return alert('Fill title, artist and audio');
+let readerAudio=new FileReader();
+let readerCover=new FileReader();
+readerAudio.onload=function(e){
+let audioUrl=e.target.result;
+let coverUrl="icon.png";
+let finish=()=>{
+let newSong={title,artist,lyrics,cover:coverUrl,url:audioUrl};
+songs.push(newSong);
+localStorage.setItem('austrio_songs',JSON.stringify(songs));
+alert('Uploaded! Now plays FULL duration');
+renderHome();
+};
+if(coverFile){
+readerCover.onload=function(ev){coverUrl=ev.target.result;finish();}
+readerCover.readAsDataURL(coverFile);
+}else finish();
+};
+readerAudio.readAsDataURL(audioFile);
 }
-function playTrack(s){ currentTrack=s; document.getElementById('pArt').src=s.cover; document.getElementById('pTitle').textContent=s.title; document.getElementById('pArtist').textContent=s.artist; const a=document.getElementById('audio'); a.src=s.url||s.preview; a.play(); }
-function playWorld(s){ playTrack({...s,url:s.preview}); }
-async function showLyrics(artist, title){
- openM('lyricsModal');
- document.getElementById('lyricsTitle').innerText = `🎤 ${title}`;
- document.getElementById('lyricsArtist').innerText = artist;
- document.getElementById('lyricsText').innerText = "Loading lyrics for " + title + " by " + artist + "...";
- currentLyrics={title,artist,text:""};
- try{
-  const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
-  const data = await res.json();
-  if(data.lyrics){ document.getElementById('lyricsText').innerText = data.lyrics; currentLyrics.text = data.lyrics; }
-  else { document.getElementById('lyricsText').innerHTML = `<a href="https://www.google.com/search?q=${encodeURIComponent(artist+' '+title+' lyrics')}" target="_blank" style="color:#1DB954">View lyrics on Google →</a>`; }
- }catch(err){ document.getElementById('lyricsText').innerHTML = `<a href="https://www.google.com/search?q=${encodeURIComponent(artist+' '+title+' lyrics')}" target="_blank" style="color:#1DB954">Search on Google →</a>`; }
+
+function playSong(i,from){
+let list=from==='home'?[...defaultSongs,...songs]:window.liveSongs;
+let s=list[i]||list[0];
+if(!s) return;
+currentSong=s;
+document.getElementById('player').style.display='flex';
+document.getElementById('pCover').src=s.cover;
+document.getElementById('pTitle').innerText=s.title;
+document.getElementById('pArtist').innerText=s.artist;
+if(s.url.startsWith('data:')||s.url.includes('.mp3')){
+document.getElementById('ytPlayer').style.display='none';
+audio.src=s.url;audio.play();isPlaying=true;
+}else{
+// worldwide full play via YouTube search
+let q=encodeURIComponent(s.title+' '+s.artist+' official');
+document.getElementById('ytPlayer').style.display='block';
+document.getElementById('ytFrame').src=`https://www.youtube.com/embed?listType=search&list=${q}&autoplay=1`;
+showLyrics(s.title,s.lyrics||'Full version playing via YouTube');
+audio.pause();
 }
-function openLyricsFromPlayer(){ if(!currentTrack) return alert("Play a song first"); showLyrics(currentTrack.artist, currentTrack.title); }
-function shareLyrics(){ if(currentLyrics.text){ if(navigator.share){ navigator.share({title: currentLyrics.title, text: currentLyrics.text.slice(0,500)}); } else { navigator.clipboard.writeText(currentLyrics.text.slice(0,1000)); alert("Lyrics copied!"); } } else { alert("No lyrics yet"); } }
-function tabClick(el,tab){
- document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
- if(tab==='home'){ document.getElementById('oldTitle').style.display='block'; document.getElementById('oldGrid').style.display='grid'; searchMusic('Rema'); }
- if(tab==='search'){ document.getElementById('oldTitle').style.display='none'; document.getElementById('oldGrid').style.display='none'; document.getElementById('newTitle').innerText='Worldwide + Lyrics'; document.getElementById('newGrid').innerHTML='<p style="padding:16px">Type and press Enter. Tap 🎤 for lyrics.</p>'; }
- if(tab==='artists'){ document.getElementById('oldTitle').style.display='none'; document.getElementById('oldGrid').style.display='none'; document.getElementById('newTitle').innerText='Artist Uploads LIVE'; loadFirebaseSongs(); }
 }
-document.getElementById('searchInput').addEventListener('keydown',e=>{ if(e.key==='Enter') searchMusic(e.target.value); });
-function askAI(){
- const q=document.getElementById('aiInput').value; if(!q) return;
- if(q.toLowerCase().includes("lyric")){
-  const parts = q.replace(/lyrics|for|show|give me/gi,"").trim();
-  const split = parts.split(" by ");
-  if(split.length>1) showLyrics(split[1], split[0]); else showLyrics("",""+parts);
- } else { searchMusic(q); }
+
+audio.ontimeupdate=function(){let p=(audio.currentTime/audio.duration)*100;document.getElementById('pBar').style.width=p+'%';}
+function togglePlay(){if(isPlaying){audio.pause();isPlaying=false;}else{audio.play();isPlaying=true;}}
+function showLyrics(title,lyrics){document.getElementById('lyricTitle').innerText=title+' - Lyrics';document.getElementById('lyricContent').innerText=lyrics||'Lyrics not available yet';document.getElementById('lyricsModal').style.display='block';}
+function toggleLyrics(){let m=document.getElementById('lyricsModal');m.style.display=m.style.display==='none'?'block':'none';}
+
+async function doSearch(q){
+let query=q||document.getElementById('searchInput').value||'Rema';
+switchTab('live',document.querySelectorAll('.tabs .tab')[1]);
+document.getElementById('liveGrid').innerHTML='<p style="padding:20px">Searching...</p>';
+try{
+let res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=12`);
+let data=await res.json();
+window.liveSongs=data.results.map(r=>({title:r.trackName,artist:r.artistName,cover:r.artworkUrl100,url:r.previewUrl,lyrics:`${r.trackName} by ${r.artistName}\n\nLyrics loading...\nSearch on Google for full lyrics.`}));
+document.getElementById('liveGrid').innerHTML=window.liveSongs.map((s,i)=>`
+<div class="card" onclick="playSong(${i},'live')">
+<img src="${s.cover}"><h4>${s.title}</h4><p>${s.artist}</p>
+<div class="actions"><button class="small-btn" onclick="event.stopPropagation();showLyrics('${s.title.replace(/'/g,'')}','${s.lyrics.replace(/'/g,'')}')">🎤 Lyrics</button><button class="small-btn">▶️ Play Full</button></div>
+</div>`).join('');
+}catch(e){document.getElementById('liveGrid').innerHTML='<p>Search failed</p>';}
 }
-function updateAuth(){
- const d=document.getElementById('auth');
- if(user){ d.innerHTML=`<span style="font-size:10px">${user.name}</span><button class="btn btn-o" style="padding:5px 10px" onclick="logout()">Logout</button>${user.type==='artist'?'<button class="btn btn-g" style="padding:5px 10px;margin-left:4px" onclick="uploadSong()">+ Upload</button>':''}`; }
- else{ d.innerHTML=`<button class="btn btn-o" style="padding:6px 10px" onclick="openM('loginM')">Login</button><button class="btn btn-g" style="padding:6px 10px;margin-left:4px" onclick="openM('signupM')">Sign up</button>`; }
-}
-function openM(id){ document.getElementById(id).classList.add('show'); }
-function closeM(){ document.querySelectorAll('.modal').forEach(m=>m.classList.remove('show')); }
-function doSignup(){
- const name=document.getElementById('sName').value, email=document.getElementById('sEmail').value, type=document.getElementById('accType').value;
- if(!name||!email) return alert('Fill name & email');
- user={name,email,type}; localStorage.setItem('austrio_user',JSON.stringify(user)); updateAuth(); closeM(); installApp();
-}
-function doLogin(){
- const email=document.getElementById('lEmail').value; if(!email) return alert('Enter email');
- user={name:email.split('@')[0],email,type:'user'}; localStorage.setItem('austrio_user',JSON.stringify(user)); updateAuth(); closeM();
-}
-function logout(){ localStorage.removeItem('austrio_user'); user=null; location.reload(); }
-async function uploadSong(){
- if(!user||user.type!=='artist') return alert('Create Artist Account first');
- const title=prompt('Song title:'); if(!title) return;
- const lyrics = prompt('Add lyrics (optional):')||'';
- const inp=document.createElement('input'); inp.type='file'; inp.accept='audio/*';
- inp.onchange=async e=>{
-  const file=e.target.files[0];
-  const cover=`icon.png`;
-  const localUrl=URL.createObjectURL(file);
-  const track={title,artist:user.name,cover,url:localUrl,lyrics,created:Date.now()};
-  artistUploads.unshift(track); localStorage.setItem('austrio_artist_v2',JSON.stringify(artistUploads.slice(0,30)));
-  playTrack(track);
-  try{
-   if(window.db){
-    const storageRef = window.fbTools.ref(window.storage, `songs/${Date.now()}_${file.name}`);
-    await window.fbTools.uploadBytes(storageRef, file);
-    const fbUrl = await window.fbTools.getDownloadURL(storageRef);
-    await window.fbTools.addDoc(window.fbTools.collection(window.db,"songs"), {...track,url:fbUrl});
-    alert("Uploaded WORLDWIDE with icon + lyrics!");
-   } else { alert("Uploaded locally. Add Firebase config for worldwide."); }
-  }catch(err){ alert("Local upload done."); }
- };
- inp.click();
-}
-function downloadNow(){ if(!currentTrack) return alert('Play a song first'); window.open(currentTrack.url||currentTrack.preview,'_blank'); }
-init();
+
+// PWA install
+let deferredPrompt;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBtn').style.display='block';});
+document.getElementById('installBtn').addEventListener('click',()=>{if(deferredPrompt)deferredPrompt.prompt();});
 </script>
 </body>
   </html>
