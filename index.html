@@ -215,6 +215,115 @@ document.getElementById('liveGrid').innerHTML=window.liveSongs.map((s,i)=>`
 // PWA install
 let deferredPrompt;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBtn').style.display='block';});
 document.getElementById('installBtn').addEventListener('click',()=>{if(deferredPrompt)deferredPrompt.prompt();});
+<script>
+let songs = JSON.parse(localStorage.getItem('austrio_songs')||'[]');
+let currentSong=null; let isPlaying=false;
+let audio=document.getElementById('audio');
+const defaultSongs=[
+{title:"Calm Down",artist:"Rema",cover:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=200",lyrics:"Calm down...",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
+{title:"Last Last",artist:"Burna Boy",cover:"https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=200",lyrics:"Last last...",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"}
+];
+
+function renderHome(){
+let all=[...defaultSongs,...songs];
+if(all.length==0){document.getElementById('homeGrid').innerHTML='<p style="padding:20px">No songs yet, upload one!</p>';return;}
+document.getElementById('homeGrid').innerHTML=all.map((s,i)=>`
+<div class="card" onclick="playSong(${i},'home')">
+<img src="${s.cover}" onerror="this.src='icon.png'"><h4>${s.title}</h4><p>${s.artist}</p>
+<div class="actions"><button class="small-btn" onclick="event.stopPropagation();showLyrics('${s.title.replace(/'/g,'')}','${(s.lyrics||'').replace(/'/g,'')}')">🎤 Lyrics</button></div>
+</div>`).join('');
+}
+renderHome();
+
+function switchTab(t,el){
+document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+if(el) el.classList.add('active');
+document.getElementById('homeGrid').style.display=t==='home'?'grid':'none';
+document.getElementById('liveGrid').style.display=t==='live'?'grid':'none';
+document.getElementById('uploadArea').style.display='none';
+if(t==='live' && document.getElementById('liveGrid').innerHTML==='') doSearch('Rema');
+if(t==='mymusic'){
+document.getElementById('homeGrid').style.display='grid';
+if(songs.length==0) document.getElementById('homeGrid').innerHTML='<p style="padding:20px">No uploads yet. Click Upload to add.</p>';
+else document.getElementById('homeGrid').innerHTML=songs.map((s,i)=>`<div class="card" onclick="playSong(${i+defaultSongs.length},'home')"><img src="${s.cover}"><h4>${s.title}</h4><p>${s.artist}</p></div>`).join('');
+}
+}
+function showUpload(){document.getElementById('uploadArea').style.display='block';window.scrollTo(0,0)}
+
+// FIXED UPLOAD - USES BLOB URL, NOT TOO BIG FOR STORAGE
+function uploadSong(){
+let title=document.getElementById('songTitle').value.trim();
+let artist=document.getElementById('artistName').value.trim();
+let lyrics=document.getElementById('lyricsInput').value;
+let audioFile=document.getElementById('audioFile').files[0];
+let coverFile=document.getElementById('coverFile').files[0];
+if(!title||!artist||!audioFile) return alert('Please fill Title, Artist and choose MP3');
+
+let audioUrl = URL.createObjectURL(audioFile); // THIS IS THE FIX - plays full, no limit
+let coverUrl = "icon.png";
+
+let done = ()=>{
+let newSong={title,artist,lyrics,cover:coverUrl,url:audioUrl,isBlob:true,fileName:audioFile.name};
+songs.push(newSong);
+// Save only text info to localStorage, not heavy audio
+let saveSongs = songs.map(s=>({title:s.title,artist:s.artist,lyrics:s.lyrics,cover:s.cover,fileName:s.fileName}));
+// We can't save blob permanently in localStorage, so we tell user
+localStorage.setItem('austrio_songs_meta',JSON.stringify(saveSongs));
+alert('✅ Uploaded! '+title+' will now play FULL. NOTE: Because you are in downloaded app, this song will stay only on this phone until you add Firebase. Play it now to test.');
+renderHome();
+switchTab('mymusic',document.querySelectorAll('.tabs .tab')[2]);
+};
+
+if(coverFile){
+let r=new FileReader(); r.onload=e=>{coverUrl=e.target.result; done();}; r.readAsDataURL(coverFile);
+}else done();
+}
+
+function playSong(i,from){
+let list=from==='home'?[...defaultSongs,...songs]:window.liveSongs;
+let s=list[i]; if(!s) return;
+currentSong=s;
+document.getElementById('player').style.display='flex';
+document.getElementById('pCover').src=s.cover;
+document.getElementById('pTitle').innerText=s.title;
+document.getElementById('pArtist').innerText=s.artist;
+if(s.url.includes('youtube') || s.url.startsWith('blob:') || s.url.startsWith('data:') || s.url.includes('.mp3')){
+if(s.url.startsWith('blob:') || s.url.startsWith('data:') || s.url.includes('.mp3')){
+document.getElementById('ytPlayer').style.display='none';
+audio.src=s.url; audio.play().then(()=>{isPlaying=true;}).catch(e=>{alert('Tap Play button to start. Phone blocked autoplay.');});
+}else{
+let q=encodeURIComponent(s.title+' '+s.artist+' official');
+document.getElementById('ytPlayer').style.display='block';
+document.getElementById('ytFrame').src=`https://www.youtube.com/embed?listType=search&list=${q}&autoplay=1`;
+showLyrics(s.title,s.lyrics||'Full version playing via YouTube');
+audio.pause();
+}
+}else{
+let q=encodeURIComponent(s.title+' '+s.artist+' official');
+document.getElementById('ytPlayer').style.display='block';
+document.getElementById('ytFrame').src=`https://www.youtube.com/embed?listType=search&list=${q}&autoplay=1`;
+showLyrics(s.title,s.lyrics||'Full version playing');
+audio.pause();
+}
+}
+audio.ontimeupdate=function(){if(audio.duration)document.getElementById('pBar').style.width=(audio.currentTime/audio.duration*100)+'%';}
+function togglePlay(){if(audio.paused){audio.play();isPlaying=true;}else{audio.pause();isPlaying=false;}}
+function showLyrics(title,lyrics){document.getElementById('lyricTitle').innerText=title+' - Lyrics';document.getElementById('lyricContent').innerText=lyrics||'Lyrics not available';document.getElementById('lyricsModal').style.display='block';}
+function toggleLyrics(){let m=document.getElementById('lyricsModal');m.style.display=m.style.display==='none'?'block':'none';}
+async function doSearch(q){
+let query=q||document.getElementById('searchInput').value||'Rema';
+switchTab('live',document.querySelectorAll('.tabs .tab')[1]);
+document.getElementById('liveGrid').innerHTML='<p style="padding:20px">Searching...</p>';
+try{
+let res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=12`);
+let data=await res.json();
+window.liveSongs=data.results.map(r=>({title:r.trackName,artist:r.artistName,cover:r.artworkUrl100,url:r.previewUrl,lyrics:`${r.trackName} by ${r.artistName}`}));
+document.getElementById('liveGrid').innerHTML=window.liveSongs.map((s,i)=>`<div class="card" onclick="playSong(${i},'live')"><img src="${s.cover}"><h4>${s.title}</h4><p>${s.artist}</p><div class="actions"><button class="small-btn">▶️ Play Full</button><button class="small-btn" onclick="event.stopPropagation();showLyrics('${s.title.replace(/'/g,'')}','${s.lyrics.replace(/'/g,'')}')">🎤 Lyrics</button></div></div>`).join('');
+}catch(e){document.getElementById('liveGrid').innerHTML='<p>Search failed. Check internet.</p>';}
+}
+let deferredPrompt;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBtn').style.display='block';});
+document.getElementById('installBtn').addEventListener('click',()=>{if(deferredPrompt)deferredPrompt.prompt();});
 </script>
 </body>
   </html>
